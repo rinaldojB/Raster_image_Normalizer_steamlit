@@ -271,19 +271,45 @@ st.markdown(
 
     /* ---- restyle native Streamlit widgets to match the original look ---- */
 
-    /* file uploader -> dropzone look */
-    [data-testid="stFileUploaderDropzone"],
-    [data-testid="stFileUploadDropzone"]{
-        border:2px solid var(--line) !important;
-        border-radius:2px !important;
+    /* file uploader label -> merged as the top half of one seamless box */
+    [data-testid="stFileUploader"] [data-testid="stWidgetLabel"]{
         background:#ebf6cc !important;
+        border:2px solid var(--line);
+        border-bottom:none;
+        border-radius:2px 2px 0 0;
+        padding:14px 18px 6px;
+        margin-bottom:0 !important;
     }
-    [data-testid="stFileUploaderDropzone"] *,
-    [data-testid="stFileUploadDropzone"] *{
+    [data-testid="stFileUploader"] [data-testid="stWidgetLabel"] p{
+        font-family:var(--sans) !important;
+        color:var(--ink) !important;
+        font-size:14px;
+        margin:0;
+    }
+
+    /* dropzone -> bottom half of the same box, seam removed between the two */
+    [data-testid="stFileUploaderDropzone"]{
+        border:2px solid var(--line) !important;
+        border-top:none !important;
+        border-radius:0 0 2px 2px !important;
+        background:#ebf6cc !important;
+        margin-top:0 !important;
+    }
+
+    /* only the instruction/helper text is restyled - icons and the Browse
+       button are left alone so their built-in accessibility text stays
+       correctly hidden instead of doubling up on screen */
+    [data-testid="stFileUploaderDropzoneInstructions"] span{
         font-family:var(--sans) !important;
         color:var(--ink) !important;
     }
-
+    [data-testid="stFileUploaderDropzoneInstructions"] small{
+        font-family:var(--sans) !important;
+        color:#555 !important;
+    }
+    [data-testid="stFileUploaderDropzone"] button{
+        color:#ffffff !important;
+    }
     /* select box -> matches select/button styling */
     div[data-baseweb="select"] > div{
         font-family:var(--mono) !important;
