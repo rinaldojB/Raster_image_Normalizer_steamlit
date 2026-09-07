@@ -118,6 +118,36 @@ def to_png_bytes(image: Image.Image) -> bytes:
     return buffer.getvalue()
 
 
+DOWNLOAD_FORMATS = {
+    "PNG": {"pil_format": "PNG", "ext": "png", "mime": "image/png"},
+    "JPEG": {"pil_format": "JPEG", "ext": "jpg", "mime": "image/jpeg"},
+    "BMP": {"pil_format": "BMP", "ext": "bmp", "mime": "image/bmp"},
+    "TIFF": {"pil_format": "TIFF", "ext": "tiff", "mime": "image/tiff"},
+    "WEBP": {"pil_format": "WEBP", "ext": "webp", "mime": "image/webp"},
+}
+
+
+def to_format_bytes(image: Image.Image, fmt_key: str) -> bytes:
+    """
+    Encode `image` as the chosen download format. JPEG can't store an
+    alpha channel, so if the image has transparency it's flattened onto
+    a white background first; every other format here supports RGBA
+    natively and is saved as-is.
+    """
+    fmt = DOWNLOAD_FORMATS[fmt_key]
+    save_image = image
+
+    if fmt["pil_format"] == "JPEG" and image.mode in ("RGBA", "LA", "P"):
+        rgba = image.convert("RGBA")
+        background = Image.new("RGB", image.size, (255, 255, 255))
+        background.paste(rgba, mask=rgba.split()[3])
+        save_image = background
+
+    buffer = io.BytesIO()
+    save_image.save(buffer, format=fmt["pil_format"])
+    return buffer.getvalue()
+
+
 # ----------------------------------------------------------------------------
 # Front-end design - CSS ported from the original templates/index.html
 # ----------------------------------------------------------------------------
@@ -129,7 +159,7 @@ st.markdown(
     :root{
         --ink:#1b2420;
         --paper:#d8d1a1;
-        --line:#141414;
+        --line:#85a4ef;
         --line1:#5162b5;
         --accent:#8e6e37;
         --accent1:#42584ad3;
@@ -254,7 +284,7 @@ st.markdown(
     .rn-footer{
         margin-top:56px;
         font-family:var(--sans);
-        font-size:13px;
+        font-size:14px;
         color:#171717;
         border-top:1px solid var(--line);
         padding-top:16px;
@@ -264,7 +294,7 @@ st.markdown(
         margin-top:60px;
         font-family:var(--sans);
         font-size:13px;
-        color:#474747;
+        color:#fffff;
         border-top:1px solid var(--line);
         padding-top:16px;
     }
@@ -305,11 +335,12 @@ st.markdown(
     }
     [data-testid="stFileUploaderDropzoneInstructions"] small{
         font-family:var(--sans) !important;
-        color:#555 !important;
+    color:#555 !important;
     }
     [data-testid="stFileUploaderDropzone"] button{
         color:#ffffff !important;
     }
+
     /* select box -> matches select/button styling */
     div[data-baseweb="select"] > div{
         font-family:var(--mono) !important;
@@ -433,11 +464,19 @@ if uploaded_file is not None:
             unsafe_allow_html=True,
         )
 
+    st.markdown('<div class="rn-modelabel">Download Format:</div>', unsafe_allow_html=True)
+    download_format = st.selectbox(
+        "Download format",
+        options=list(DOWNLOAD_FORMATS.keys()),
+        label_visibility="collapsed",
+    )
+
+    fmt_info = DOWNLOAD_FORMATS[download_format]
     st.download_button(
-        label="Download normalized PNG",
-        data=to_png_bytes(normalized),
-        file_name="normalized.png",
-        mime="image/png",
+        label=f"Download normalized {download_format}",
+        data=to_format_bytes(normalized, download_format),
+        file_name=f"normalized.{fmt_info['ext']}",
+        mime=fmt_info["mime"],
         use_container_width=True,
     )
 
